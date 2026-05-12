@@ -25,7 +25,7 @@ android {
         buildConfigField(
             "String",
             "SUPABASE_KEY",
-            "\"sb_publishable_8KeNP4G99yzw3dkXSytpBQ_aogLceTpY\""
+            "\"sb_publishable_8KeNP4G99yzw3dkXSytpBQ_aogLceTp\""
         )
     }
 
