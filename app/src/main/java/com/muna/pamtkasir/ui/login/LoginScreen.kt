@@ -59,7 +59,6 @@ fun LoginScreen(
     ) {
         Spacer(Modifier.height(239.dp))
 
-        // Card utama
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
@@ -74,8 +73,6 @@ fun LoginScreen(
                 .background(CardBg)
                 .padding(bottom = 34.dp)
         ) {
-
-            // Header
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -87,7 +84,7 @@ fun LoginScreen(
                     .padding(vertical = 27.dp)
             ) {
                 Image(
-                    painter            = painterResource(id = R.drawable.logo_kasirku),
+                    painter            = painterResource(id = R.drawable.logo_kasirku), // ← fix di sini
                     contentDescription = "Logo",
                     modifier           = Modifier
                         .padding(start = 21.dp, end = 11.dp)
@@ -112,7 +109,6 @@ fun LoginScreen(
 
             Spacer(Modifier.height(29.dp))
 
-            // Email
             Column(
                 modifier = Modifier
                     .padding(bottom = 13.dp, start = 21.dp, end = 21.dp)
@@ -128,11 +124,7 @@ fun LoginScreen(
                     value         = email,
                     onValueChange = { email = it },
                     placeholder   = {
-                        Text(
-                            text     = "nama@toko.com",
-                            fontSize = 11.sp,
-                            color    = Color.Gray
-                        )
+                        Text(text = "nama@toko.com", fontSize = 11.sp, color = Color.Gray)
                     },
                     singleLine      = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -151,7 +143,6 @@ fun LoginScreen(
                 )
             }
 
-            // Password
             Column(
                 modifier = Modifier
                     .padding(bottom = 26.dp, start = 21.dp, end = 21.dp)
@@ -167,11 +158,7 @@ fun LoginScreen(
                     value         = password,
                     onValueChange = { password = it },
                     placeholder   = {
-                        Text(
-                            text     = "••••••••",
-                            fontSize = 11.sp,
-                            color    = Color.Gray
-                        )
+                        Text(text = "••••••••", fontSize = 11.sp, color = Color.Gray)
                     },
                     singleLine           = true,
                     keyboardOptions      = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -203,7 +190,6 @@ fun LoginScreen(
                 )
             }
 
-            // Error message
             AnimatedVisibility(
                 visible  = state is AuthState.Error,
                 modifier = Modifier.padding(horizontal = 21.dp)
@@ -234,7 +220,6 @@ fun LoginScreen(
                 }
             }
 
-            // Tombol Masuk
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -254,7 +239,6 @@ fun LoginScreen(
                 )
             }
 
-            // Link Register
             Text(
                 text     = "Belum punya akun? Daftar sekarang",
                 color    = Color.Black,
@@ -263,7 +247,6 @@ fun LoginScreen(
             )
         }
 
-        // Footer
         Text(
             text     = "Kelompok 5",
             color    = Color.Black,
@@ -271,7 +254,6 @@ fun LoginScreen(
             modifier = Modifier.padding(top = 31.dp, bottom = 31.dp)
         )
 
-        // Navigation side-effect
         val currentState = state
         if (currentState is AuthState.LoginSuccess) {
             LaunchedEffect(currentState) {
