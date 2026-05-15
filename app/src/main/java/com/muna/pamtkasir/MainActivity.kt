@@ -22,9 +22,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.muna.pamtkasir.model.Kas
+import com.muna.pamtkasir.model.Produk
 import com.muna.pamtkasir.ui.kas.KasLogScreen
 import com.muna.pamtkasir.ui.kas.KasScreen
 import com.muna.pamtkasir.ui.login.LoginScreen
+import com.muna.pamtkasir.ui.produk.ProdukLogScreen
 import com.muna.pamtkasir.ui.produk.ProdukScreen
 import com.muna.pamtkasir.ui.register.RegisterScreen
 import com.muna.pamtkasir.ui.theme.PAMTKASIRTheme
@@ -34,7 +36,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 private val HeaderGreen = Color(0xFF1A6651)
-private val BgGreen = Color(0xFF66B499)
+private val BgGreen     = Color(0xFF66B499)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +46,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 NavHost(
-                    navController = navController,
+                    navController    = navController,
                     startDestination = "login"
                 ) {
                     composable("login") {
@@ -59,9 +61,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             },
-                            onGoToRegister = {
-                                navController.navigate("register")
-                            }
+                            onGoToRegister = { navController.navigate("register") }
                         )
                     }
 
@@ -72,26 +72,32 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("register") { inclusive = true }
                                 }
                             },
-                            onGoToLogin = {
-                                navController.popBackStack()
-                            }
+                            onGoToLogin = { navController.popBackStack() }
                         )
                     }
 
                     composable("cashier_dashboard") {
                         DashboardScreen(
-                            onNavigateToLog = { kas ->
+                            onNavigateToKasLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onNavigateToProdukLog = { produk ->
+                                val json = URLEncoder.encode(Json.encodeToString(produk), "UTF-8")
+                                navController.navigate("produk_log/$json")
                             }
                         )
                     }
 
                     composable("admin_dashboard") {
                         DashboardScreen(
-                            onNavigateToLog = { kas ->
+                            onNavigateToKasLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onNavigateToProdukLog = { produk ->
+                                val json = URLEncoder.encode(Json.encodeToString(produk), "UTF-8")
+                                navController.navigate("produk_log/$json")
                             }
                         )
                     }
@@ -100,7 +106,16 @@ class MainActivity : ComponentActivity() {
                         val encoded = backStackEntry.arguments?.getString("kasJson") ?: ""
                         val kas = Json.decodeFromString<Kas>(URLDecoder.decode(encoded, "UTF-8"))
                         KasLogScreen(
-                            kas = kas,
+                            kas            = kas,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable("produk_log/{produkJson}") { backStackEntry ->
+                        val encoded = backStackEntry.arguments?.getString("produkJson") ?: ""
+                        val produk = Json.decodeFromString<Produk>(URLDecoder.decode(encoded, "UTF-8"))
+                        ProdukLogScreen(
+                            produk         = produk,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
@@ -113,14 +128,15 @@ class MainActivity : ComponentActivity() {
 // ── Dashboard dengan Bottom Nav ────────────────────────────────────────────────
 @Composable
 fun DashboardScreen(
-    onNavigateToLog: (Kas) -> Unit
+    onNavigateToKasLog    : (Kas) -> Unit,
+    onNavigateToProdukLog : (Produk) -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
             BottomNavBar(
-                selectedTab = selectedTab,
+                selectedTab   = selectedTab,
                 onTabSelected = { selectedTab = it }
             )
         },
@@ -128,8 +144,8 @@ fun DashboardScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
-                0 -> KasScreen(onNavigateToLog = onNavigateToLog)
-                1 -> ProdukScreen()
+                0 -> KasScreen(onNavigateToLog = onNavigateToKasLog)
+                1 -> ProdukScreen(onNavigateToLog = onNavigateToProdukLog)
             }
         }
     }
@@ -138,13 +154,13 @@ fun DashboardScreen(
 // ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
 @Composable
 fun BottomNavBar(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit
+    selectedTab   : Int,
+    onTabSelected : (Int) -> Unit
 ) {
     data class NavItem(val label: String, val icon: ImageVector)
 
     val items = listOf(
-        NavItem("Kas", Icons.Outlined.AccountBalanceWallet),
+        NavItem("Kas",    Icons.Outlined.AccountBalanceWallet),
         NavItem("Produk", Icons.Outlined.ShoppingBag)
     )
 
@@ -164,16 +180,16 @@ fun BottomNavBar(
                     .padding(vertical = 6.dp)
             ) {
                 Icon(
-                    imageVector = item.icon,
+                    imageVector        = item.icon,
                     contentDescription = item.label,
-                    tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
-                    modifier = Modifier.size(22.dp)
+                    tint               = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                    modifier           = Modifier.size(22.dp)
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
-                    text = item.label,
-                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
-                    fontSize = 10.sp,
+                    text       = item.label,
+                    color      = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                    fontSize   = 10.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
             }
