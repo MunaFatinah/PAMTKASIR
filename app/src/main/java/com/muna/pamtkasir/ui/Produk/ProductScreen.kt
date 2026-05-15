@@ -30,25 +30,22 @@ import com.muna.pamtkasir.model.Produk
 import com.muna.pamtkasir.ui.kas.formatRupiah
 import io.github.jan.supabase.auth.auth
 
-
-// ── Warna (sama dengan KasScreen biar konsisten) ───────────────────────────────
 private val BgGreen     = Color(0xFF66B499)
 private val HeaderGreen = Color(0xFF1A6651)
 private val CardBg      = Color(0xFFF6F6F6)
 private val ErrorRed    = Color(0xFFE24B4A)
 
 @Composable
-fun ProdukScreen() {
-    // Ambil ViewModel dan observe state-nya
+fun ProdukScreen(
+    onNavigateToLog: (Produk) -> Unit = {}
+) {
     val viewModel: ProdukViewModel = viewModel()
     val produkState by viewModel.produkState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
 
-    // State untuk kontrol dialog mana yang tampil
     var showAddDialog  by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf<Produk?>(null) }
 
-    // Snackbar untuk notifikasi berhasil/gagal
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(actionState) {
         actionState?.let {
@@ -67,7 +64,6 @@ fun ProdukScreen() {
                 .padding(innerPadding)
                 .background(BgGreen)
         ) {
-
             // ── Top Bar ────────────────────────────────────────────────
             Row(
                 verticalAlignment     = Alignment.CenterVertically,
@@ -78,7 +74,6 @@ fun ProdukScreen() {
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Logo aplikasi
                     Image(
                         painter            = painterResource(id = R.drawable.logo_kasirku),
                         contentDescription = "Logo",
@@ -101,7 +96,6 @@ fun ProdukScreen() {
                         )
                     }
                 }
-                // Tombol tambah produk baru
                 IconButton(
                     onClick  = { showAddDialog = true },
                     modifier = Modifier
@@ -112,26 +106,17 @@ fun ProdukScreen() {
                 }
             }
 
-            // ── Isi Konten berdasarkan state ───────────────────────────
+            // ── Konten ─────────────────────────────────────────────────
             when (val state = produkState) {
-
-                // Loading: tampilkan spinner
                 is ProdukState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = Color.White)
                     }
                 }
-
-                // Error: tampilkan pesan dan tombol retry
                 is ProdukState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Outlined.Warning,
-                                contentDescription = null,
-                                tint     = ErrorRed,
-                                modifier = Modifier.size(48.dp)
-                            )
+                            Icon(Icons.Outlined.Warning, null, tint = ErrorRed, modifier = Modifier.size(48.dp))
                             Spacer(Modifier.height(8.dp))
                             Text(state.message, color = Color.White, fontSize = 13.sp)
                             Spacer(Modifier.height(12.dp))
@@ -144,47 +129,26 @@ fun ProdukScreen() {
                         }
                     }
                 }
-
-                // Sukses: tampilkan list atau pesan kosong
                 is ProdukState.Success -> {
                     if (state.data.isEmpty()) {
-                        // Belum ada produk
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    Icons.Outlined.Inventory2,
-                                    contentDescription = null,
-                                    tint     = Color.White.copy(alpha = 0.5f),
-                                    modifier = Modifier.size(56.dp)
-                                )
+                                Icon(Icons.Outlined.Inventory2, null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(56.dp))
                                 Spacer(Modifier.height(10.dp))
-                                Text(
-                                    "Belum ada produk",
-                                    color    = Color.White.copy(alpha = 0.7f),
-                                    fontSize = 14.sp
-                                )
-                                Text(
-                                    "Tap + untuk menambah produk baru",
-                                    color    = Color.White.copy(alpha = 0.5f),
-                                    fontSize = 12.sp
-                                )
+                                Text("Belum ada produk", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
+                                Text("Tap + untuk menambah produk baru", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp)
                             }
                         }
                     } else {
-                        // Ada data: tampilkan list kartu produk
                         LazyColumn(
-                            contentPadding = PaddingValues(
-                                start  = 20.dp,
-                                end    = 20.dp,
-                                top    = 16.dp,
-                                bottom = 24.dp
-                            ),
+                            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 24.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             items(state.data) { produk ->
                                 ProdukCard(
-                                    produk = produk,
-                                    onEdit = { showEditDialog = produk }
+                                    produk      = produk,
+                                    onEdit      = { showEditDialog = produk },
+                                    onLihatLog  = { onNavigateToLog(produk) }
                                 )
                             }
                         }
@@ -194,12 +158,10 @@ fun ProdukScreen() {
         }
     }
 
-    // ── Dialog Tambah Produk ───────────────────────────────────────────
     if (showAddDialog) {
         AddProdukDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { name, price, stock ->
-                // Ambil user ID yang sedang login
                 val userId = SupabaseClientProvider.client.auth.currentUserOrNull()?.id ?: ""
                 viewModel.addProduk(name, price, stock, userId)
                 showAddDialog = false
@@ -207,7 +169,6 @@ fun ProdukScreen() {
         )
     }
 
-    // ── Dialog Edit Produk ─────────────────────────────────────────────
     showEditDialog?.let { produk ->
         EditProdukDialog(
             produk    = produk,
@@ -223,8 +184,9 @@ fun ProdukScreen() {
 // ── Kartu satu produk ──────────────────────────────────────────────────────────
 @Composable
 private fun ProdukCard(
-    produk : Produk,
-    onEdit : () -> Unit
+    produk     : Produk,
+    onEdit     : () -> Unit,
+    onLihatLog : () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -235,7 +197,6 @@ private fun ProdukCard(
             .background(CardBg)
             .padding(14.dp)
     ) {
-        // Ikon produk
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -243,33 +204,16 @@ private fun ProdukCard(
                 .clip(RoundedCornerShape(10.dp))
                 .background(HeaderGreen.copy(alpha = 0.12f))
         ) {
-            Icon(
-                Icons.Outlined.ShoppingBag,
-                contentDescription = null,
-                tint     = HeaderGreen,
-                modifier = Modifier.size(22.dp)
-            )
+            Icon(Icons.Outlined.ShoppingBag, null, tint = HeaderGreen, modifier = Modifier.size(22.dp))
         }
 
         Spacer(Modifier.width(12.dp))
 
-        // Info produk: nama, harga, stok
         Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text       = produk.name,
-                fontWeight = FontWeight.SemiBold,
-                fontSize   = 13.sp,
-                color      = Color.Black
-            )
+            Text(produk.name, fontWeight = FontWeight.SemiBold, fontSize = 13.sp, color = Color.Black)
             Spacer(Modifier.height(2.dp))
-            Text(
-                text       = formatRupiah(produk.price),
-                fontSize   = 12.sp,
-                color      = HeaderGreen,
-                fontWeight = FontWeight.Bold
-            )
+            Text(formatRupiah(produk.price), fontSize = 12.sp, color = HeaderGreen, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(2.dp))
-            // Stok merah kalau habis, abu-abu kalau masih ada
             Text(
                 text     = "Stok: ${produk.stock.toInt()}",
                 fontSize = 11.sp,
@@ -277,29 +221,35 @@ private fun ProdukCard(
             )
         }
 
-        // Tombol edit
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(6.dp))
-                .background(HeaderGreen.copy(alpha = 0.12f))
-                .clickable { onEdit() }
-                .padding(horizontal = 12.dp, vertical = 6.dp)
-        ) {
-            Text(
-                text       = "Edit",
-                color      = HeaderGreen,
-                fontSize   = 11.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+        // Tombol Log + Edit
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(HeaderGreen.copy(alpha = 0.12f))
+                    .clickable { onLihatLog() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text("Log", color = HeaderGreen, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(HeaderGreen.copy(alpha = 0.12f))
+                    .clickable { onEdit() }
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text("Edit", color = HeaderGreen, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
     }
 }
 
-// ── Dialog untuk tambah produk baru ───────────────────────────────────────────
+// ── Dialog Tambah Produk ───────────────────────────────────────────────────────
 @Composable
 private fun AddProdukDialog(
     onDismiss : () -> Unit,
-    onConfirm : (String, Double, Double) -> Unit  // nama, harga, stok
+    onConfirm : (String, Double, Double) -> Unit
 ) {
     var name  by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
@@ -349,7 +299,6 @@ private fun AddProdukDialog(
                 onClick = {
                     val p = price.toDoubleOrNull() ?: 0.0
                     val s = stock.toDoubleOrNull() ?: 0.0
-                    // Hanya simpan kalau nama tidak kosong
                     if (name.isNotBlank()) onConfirm(name, p, s)
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = HeaderGreen),
@@ -362,14 +311,13 @@ private fun AddProdukDialog(
     )
 }
 
-// ── Dialog untuk edit produk yang sudah ada ────────────────────────────────────
+// ── Dialog Edit Produk ─────────────────────────────────────────────────────────
 @Composable
 private fun EditProdukDialog(
     produk    : Produk,
     onDismiss : () -> Unit,
-    onConfirm : (String, Double, Double) -> Unit  // nama, harga, stok
+    onConfirm : (String, Double, Double) -> Unit
 ) {
-    // Pre-fill field dengan data produk yang dipilih
     var name  by remember { mutableStateOf(produk.name) }
     var price by remember { mutableStateOf(produk.price.toInt().toString()) }
     var stock by remember { mutableStateOf(produk.stock.toInt().toString()) }
@@ -430,7 +378,7 @@ private fun EditProdukDialog(
     )
 }
 
-// ── Warna field yang konsisten di semua dialog ─────────────────────────────────
+// ── Warna field ────────────────────────────────────────────────────────────────
 @Composable
 private fun produkFieldColors() = OutlinedTextFieldDefaults.colors(
     unfocusedContainerColor = Color.White,
