@@ -8,6 +8,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.MoneyOff
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +27,9 @@ import com.muna.pamtkasir.model.Kas
 import com.muna.pamtkasir.ui.kas.KasLogScreen
 import com.muna.pamtkasir.ui.kas.KasScreen
 import com.muna.pamtkasir.ui.login.LoginScreen
+import com.muna.pamtkasir.ui.pengeluaran.PengeluaranScreen
 import com.muna.pamtkasir.ui.produk.ProdukScreen
+import com.muna.pamtkasir.ui.profile.ProfileScreen
 import com.muna.pamtkasir.ui.register.RegisterScreen
 import com.muna.pamtkasir.ui.theme.PAMTKASIRTheme
 import kotlinx.serialization.encodeToString
@@ -83,6 +87,11 @@ class MainActivity : ComponentActivity() {
                             onNavigateToLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onLogout = {
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         )
                     }
@@ -92,6 +101,11 @@ class MainActivity : ComponentActivity() {
                             onNavigateToLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onLogout = {
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         )
                     }
@@ -110,10 +124,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ── Dashboard dengan Bottom Nav ────────────────────────────────────────────────
 @Composable
 fun DashboardScreen(
-    onNavigateToLog: (Kas) -> Unit
+    onNavigateToLog: (Kas) -> Unit,
+    onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -130,12 +144,13 @@ fun DashboardScreen(
             when (selectedTab) {
                 0 -> KasScreen(onNavigateToLog = onNavigateToLog)
                 1 -> ProdukScreen()
+                2 -> PengeluaranScreen()
+                3 -> ProfileScreen(onLogout = onLogout)
             }
         }
     }
 }
 
-// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
 @Composable
 fun BottomNavBar(
     selectedTab: Int,
@@ -145,7 +160,9 @@ fun BottomNavBar(
 
     val items = listOf(
         NavItem("Kas", Icons.Outlined.AccountBalanceWallet),
-        NavItem("Produk", Icons.Outlined.ShoppingBag)
+        NavItem("Produk", Icons.Outlined.ShoppingBag),
+        NavItem("Pengeluaran", Icons.Outlined.MoneyOff),
+        NavItem("Profil", Icons.Outlined.Person)
     )
 
     Row(
