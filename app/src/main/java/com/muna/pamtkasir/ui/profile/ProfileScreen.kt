@@ -108,7 +108,7 @@ fun ProfileScreen(
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text       = if (profile?.role == "admin") "👑 Admin" else "🧾 Kasir",
+                        text       = if (profile?.role == "admin") "Admin" else "Kasir",
                         color      = Color.White,
                         fontSize   = 13.sp,
                         fontWeight = FontWeight.SemiBold
