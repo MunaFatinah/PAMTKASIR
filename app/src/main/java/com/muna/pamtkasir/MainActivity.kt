@@ -7,8 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,11 +20,16 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.muna.pamtkasir.model.Customer
 import com.muna.pamtkasir.model.Kas
 import com.muna.pamtkasir.ui.kas.KasLogScreen
 import com.muna.pamtkasir.ui.kas.KasScreen
 import com.muna.pamtkasir.ui.login.LoginScreen
+import com.muna.pamtkasir.ui.pelanggan.PelangganLogScreen
+import com.muna.pamtkasir.ui.pelanggan.PelangganScreen
+import com.muna.pamtkasir.ui.pengeluaran.PengeluaranScreen
 import com.muna.pamtkasir.ui.produk.ProdukScreen
+import com.muna.pamtkasir.ui.profile.ProfileScreen
 import com.muna.pamtkasir.ui.register.RegisterScreen
 import com.muna.pamtkasir.ui.theme.PAMTKASIRTheme
 import kotlinx.serialization.encodeToString
@@ -80,18 +84,36 @@ class MainActivity : ComponentActivity() {
 
                     composable("cashier_dashboard") {
                         DashboardScreen(
-                            onNavigateToLog = { kas ->
+                            onNavigateToKasLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onNavigateToPelangganLog = { customer ->
+                                val json = URLEncoder.encode(Json.encodeToString(customer), "UTF-8")
+                                navController.navigate("pelanggan_log/$json")
+                            },
+                            onLogout = {
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         )
                     }
 
                     composable("admin_dashboard") {
                         DashboardScreen(
-                            onNavigateToLog = { kas ->
+                            onNavigateToKasLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
+                            },
+                            onNavigateToPelangganLog = { customer ->
+                                val json = URLEncoder.encode(Json.encodeToString(customer), "UTF-8")
+                                navController.navigate("pelanggan_log/$json")
+                            },
+                            onLogout = {
+                                navController.navigate("login") {
+                                    popUpTo(0) { inclusive = true }
+                                }
                             }
                         )
                     }
@@ -104,16 +126,26 @@ class MainActivity : ComponentActivity() {
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
+
+                    composable("pelanggan_log/{customerJson}") { backStackEntry ->
+                        val encoded = backStackEntry.arguments?.getString("customerJson") ?: ""
+                        val customer = Json.decodeFromString<Customer>(URLDecoder.decode(encoded, "UTF-8"))
+                        PelangganLogScreen(
+                            customer = customer,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// ── Dashboard dengan Bottom Nav ────────────────────────────────────────────────
 @Composable
 fun DashboardScreen(
-    onNavigateToLog: (Kas) -> Unit
+    onNavigateToKasLog: (Kas) -> Unit,
+    onNavigateToPelangganLog: (Customer) -> Unit,
+    onLogout: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -128,14 +160,16 @@ fun DashboardScreen(
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
-                0 -> KasScreen(onNavigateToLog = onNavigateToLog)
+                0 -> KasScreen(onNavigateToLog = onNavigateToKasLog)
                 1 -> ProdukScreen()
+                2 -> PengeluaranScreen()
+                3 -> PelangganScreen(onNavigateToLog = onNavigateToPelangganLog)
+                4 -> ProfileScreen(onLogout = onLogout)
             }
         }
     }
 }
 
-// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
 @Composable
 fun BottomNavBar(
     selectedTab: Int,
@@ -145,7 +179,10 @@ fun BottomNavBar(
 
     val items = listOf(
         NavItem("Kas", Icons.Outlined.AccountBalanceWallet),
-        NavItem("Produk", Icons.Outlined.ShoppingBag)
+        NavItem("Produk", Icons.Outlined.ShoppingBag),
+        NavItem("Pengeluaran", Icons.Outlined.MoneyOff),
+        NavItem("Pelanggan", Icons.Outlined.People),
+        NavItem("Profil", Icons.Outlined.Person)
     )
 
     Row(
@@ -173,7 +210,7 @@ fun BottomNavBar(
                 Text(
                     text = item.label,
                     color = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
             }
