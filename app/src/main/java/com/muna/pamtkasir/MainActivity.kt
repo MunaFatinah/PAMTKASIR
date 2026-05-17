@@ -32,13 +32,14 @@ import com.muna.pamtkasir.ui.produk.ProdukScreen
 import com.muna.pamtkasir.ui.profile.ProfileScreen
 import com.muna.pamtkasir.ui.register.RegisterScreen
 import com.muna.pamtkasir.ui.theme.PAMTKASIRTheme
+import com.muna.pamtkasir.ui.transaksi.TransaksiScreen
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.net.URLDecoder
 import java.net.URLEncoder
 
 private val HeaderGreen = Color(0xFF1A6651)
-private val BgGreen = Color(0xFF66B499)
+private val BgGreen     = Color(0xFF66B499)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 NavHost(
-                    navController = navController,
+                    navController    = navController,
                     startDestination = "login"
                 ) {
                     composable("login") {
@@ -63,9 +64,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             },
-                            onGoToRegister = {
-                                navController.navigate("register")
-                            }
+                            onGoToRegister = { navController.navigate("register") }
                         )
                     }
 
@@ -76,9 +75,7 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("register") { inclusive = true }
                                 }
                             },
-                            onGoToLogin = {
-                                navController.popBackStack()
-                            }
+                            onGoToLogin = { navController.popBackStack() }
                         )
                     }
 
@@ -122,16 +119,16 @@ class MainActivity : ComponentActivity() {
                         val encoded = backStackEntry.arguments?.getString("kasJson") ?: ""
                         val kas = Json.decodeFromString<Kas>(URLDecoder.decode(encoded, "UTF-8"))
                         KasLogScreen(
-                            kas = kas,
+                            kas            = kas,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
 
                     composable("pelanggan_log/{customerJson}") { backStackEntry ->
-                        val encoded = backStackEntry.arguments?.getString("customerJson") ?: ""
+                        val encoded  = backStackEntry.arguments?.getString("customerJson") ?: ""
                         val customer = Json.decodeFromString<Customer>(URLDecoder.decode(encoded, "UTF-8"))
                         PelangganLogScreen(
-                            customer = customer,
+                            customer       = customer,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
@@ -141,18 +138,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// ── Dashboard dengan Bottom Nav ────────────────────────────────────────────────
 @Composable
 fun DashboardScreen(
-    onNavigateToKasLog: (Kas) -> Unit,
+    onNavigateToKasLog      : (Kas) -> Unit,
     onNavigateToPelangganLog: (Customer) -> Unit,
-    onLogout: () -> Unit
+    onLogout                : () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
             BottomNavBar(
-                selectedTab = selectedTab,
+                selectedTab   = selectedTab,
                 onTabSelected = { selectedTab = it }
             )
         },
@@ -164,25 +162,28 @@ fun DashboardScreen(
                 1 -> ProdukScreen()
                 2 -> PengeluaranScreen()
                 3 -> PelangganScreen(onNavigateToLog = onNavigateToPelangganLog)
-                4 -> ProfileScreen(onLogout = onLogout)
+                4 -> TransaksiScreen()
+                5 -> ProfileScreen(onLogout = onLogout)
             }
         }
     }
 }
 
+// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
 @Composable
 fun BottomNavBar(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit
+    selectedTab   : Int,
+    onTabSelected : (Int) -> Unit
 ) {
     data class NavItem(val label: String, val icon: ImageVector)
 
     val items = listOf(
-        NavItem("Kas", Icons.Outlined.AccountBalanceWallet),
-        NavItem("Produk", Icons.Outlined.ShoppingBag),
-        NavItem("Pengeluaran", Icons.Outlined.MoneyOff),
-        NavItem("Pelanggan", Icons.Outlined.People),
-        NavItem("Profil", Icons.Outlined.Person)
+        NavItem("Kas",        Icons.Outlined.AccountBalanceWallet),
+        NavItem("Produk",     Icons.Outlined.ShoppingBag),
+        NavItem("Pengeluaran",Icons.Outlined.MoneyOff),
+        NavItem("Pelanggan",  Icons.Outlined.People),
+        NavItem("Transaksi",  Icons.Outlined.Receipt),
+        NavItem("Profil",     Icons.Outlined.Person)
     )
 
     Row(
@@ -201,16 +202,16 @@ fun BottomNavBar(
                     .padding(vertical = 6.dp)
             ) {
                 Icon(
-                    imageVector = item.icon,
+                    imageVector        = item.icon,
                     contentDescription = item.label,
-                    tint = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
-                    modifier = Modifier.size(22.dp)
+                    tint               = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                    modifier           = Modifier.size(22.dp)
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
-                    text = item.label,
-                    color = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
-                    fontSize = 9.sp,
+                    text       = item.label,
+                    color      = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
+                    fontSize   = 9.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                 )
             }
