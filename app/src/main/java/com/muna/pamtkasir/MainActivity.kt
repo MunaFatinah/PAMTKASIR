@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,6 +23,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.muna.pamtkasir.model.Customer
 import com.muna.pamtkasir.model.Kas
+import com.muna.pamtkasir.model.Produk
+import com.muna.pamtkasir.ui.inventorylog.InventoryLogScreen
 import com.muna.pamtkasir.ui.kas.KasLogScreen
 import com.muna.pamtkasir.ui.kas.KasScreen
 import com.muna.pamtkasir.ui.login.LoginScreen
@@ -89,6 +92,10 @@ class MainActivity : ComponentActivity() {
                                 val json = URLEncoder.encode(Json.encodeToString(customer), "UTF-8")
                                 navController.navigate("pelanggan_log/$json")
                             },
+                            onNavigateToInventoryLog = { produk ->
+                                val json = URLEncoder.encode(Json.encodeToString(produk), "UTF-8")
+                                navController.navigate("inventory_log/$json")
+                            },
                             onLogout = {
                                 navController.navigate("login") {
                                     popUpTo(0) { inclusive = true }
@@ -106,6 +113,10 @@ class MainActivity : ComponentActivity() {
                             onNavigateToPelangganLog = { customer ->
                                 val json = URLEncoder.encode(Json.encodeToString(customer), "UTF-8")
                                 navController.navigate("pelanggan_log/$json")
+                            },
+                            onNavigateToInventoryLog = { produk ->
+                                val json = URLEncoder.encode(Json.encodeToString(produk), "UTF-8")
+                                navController.navigate("inventory_log/$json")
                             },
                             onLogout = {
                                 navController.navigate("login") {
@@ -132,20 +143,29 @@ class MainActivity : ComponentActivity() {
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
+
+                    composable("inventory_log/{produkJson}") { backStackEntry ->
+                        val encoded = backStackEntry.arguments?.getString("produkJson") ?: ""
+                        val produk  = Json.decodeFromString<Produk>(URLDecoder.decode(encoded, "UTF-8"))
+                        InventoryLogScreen(
+                            produk         = produk,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// ── Dashboard dengan Bottom Nav ────────────────────────────────────────────────
 @Composable
 fun DashboardScreen(
     onNavigateToKasLog      : (Kas) -> Unit,
     onNavigateToPelangganLog: (Customer) -> Unit,
+    onNavigateToInventoryLog: (Produk) -> Unit,
     onLogout                : () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
@@ -159,7 +179,7 @@ fun DashboardScreen(
         Box(modifier = Modifier.padding(innerPadding)) {
             when (selectedTab) {
                 0 -> KasScreen(onNavigateToLog = onNavigateToKasLog)
-                1 -> ProdukScreen()
+                1 -> ProdukScreen(onNavigateToLog = onNavigateToInventoryLog)
                 2 -> PengeluaranScreen()
                 3 -> PelangganScreen(onNavigateToLog = onNavigateToPelangganLog)
                 4 -> TransaksiScreen()
@@ -169,7 +189,6 @@ fun DashboardScreen(
     }
 }
 
-// ── Bottom Nav Bar ─────────────────────────────────────────────────────────────
 @Composable
 fun BottomNavBar(
     selectedTab   : Int,
@@ -178,12 +197,12 @@ fun BottomNavBar(
     data class NavItem(val label: String, val icon: ImageVector)
 
     val items = listOf(
-        NavItem("Kas",        Icons.Outlined.AccountBalanceWallet),
-        NavItem("Produk",     Icons.Outlined.ShoppingBag),
-        NavItem("Pengeluaran",Icons.Outlined.MoneyOff),
-        NavItem("Pelanggan",  Icons.Outlined.People),
-        NavItem("Transaksi",  Icons.Outlined.Receipt),
-        NavItem("Profil",     Icons.Outlined.Person)
+        NavItem("Kas",         Icons.Outlined.AccountBalanceWallet),
+        NavItem("Produk",      Icons.Outlined.ShoppingBag),
+        NavItem("Pengeluaran", Icons.Outlined.MoneyOff),
+        NavItem("Pelanggan",   Icons.Outlined.People),
+        NavItem("Transaksi",   Icons.Outlined.Receipt),
+        NavItem("Profil",      Icons.Outlined.Person)
     )
 
     Row(
