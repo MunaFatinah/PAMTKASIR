@@ -10,12 +10,21 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
 sealed class PengeluaranState {
     object Loading : PengeluaranState()
     data class Success(val data: List<Expense>) : PengeluaranState()
     data class Error(val message: String) : PengeluaranState()
 }
+
+@Serializable
+private data class KasLogInsert(
+    @SerialName("kas_id") val kasId: String,
+    val amount: Double,
+    val description: String
+)
 
 class PengeluaranViewModel : ViewModel() {
 
@@ -93,6 +102,15 @@ class PengeluaranViewModel : ViewModel() {
                         filter { eq("id", kasId) }
                     }
 
+                // 4. Insert ke kas_logs (minus karena pengeluaran)
+                SupabaseClientProvider.client.postgrest
+                    .from("kas_logs")
+                    .insert(KasLogInsert(
+                        kasId = kasId,
+                        amount = -total,
+                        description = "Pengeluaran: $description"
+                    ))
+
                 _actionState.value = "Pengeluaran berhasil dicatat!"
                 loadExpenses()
                 loadKas()
@@ -125,6 +143,15 @@ class PengeluaranViewModel : ViewModel() {
                     .update({ set("balance", saldoBaru) }) {
                         filter { eq("id", expense.kas_id) }
                     }
+
+                // 4. Insert ke kas_logs (plus karena saldo dikembalikan)
+                SupabaseClientProvider.client.postgrest
+                    .from("kas_logs")
+                    .insert(KasLogInsert(
+                        kasId = expense.kas_id,
+                        amount = expense.total,
+                        description = "Pembatalan pengeluaran: ${expense.description}"
+                    ))
 
                 _actionState.value = "Pengeluaran berhasil dibatalkan!"
                 loadExpenses()
