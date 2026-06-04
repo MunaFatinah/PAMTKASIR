@@ -157,7 +157,11 @@ class TransaksiViewModel : ViewModel() {
             _transaksiState.value = TransaksiState.Loading
             try {
                 val userId = SupabaseClientProvider.client.auth
-                    .currentSessionOrNull()?.user?.id ?: ""
+                    .currentUserOrNull()?.id
+                    ?: run {
+                        _transaksiState.value = TransaksiState.Error("User tidak login")
+                        return@launch
+                    }
                 val total = totalHarga
                 val change = paidAmount - total
 
