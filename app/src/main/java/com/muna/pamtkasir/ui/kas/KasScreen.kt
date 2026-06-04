@@ -41,6 +41,9 @@ fun KasScreen(
     val viewModel: KasViewModel = viewModel()
     val kasState    by viewModel.kasState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
+    LaunchedEffect(Unit) {
+        viewModel.fetchKas()
+    }
 
     var showAddDialog       by remember { mutableStateOf(false) }
     var showEditDialog      by remember { mutableStateOf<Kas?>(null) }

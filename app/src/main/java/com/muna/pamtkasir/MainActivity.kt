@@ -59,10 +59,10 @@ class MainActivity : ComponentActivity() {
                         LoginScreen(
                             onLoginSuccess = { role ->
                                 when (role) {
-                                    "admin" -> navController.navigate("admin_dashboard") {
+                                    "admin" -> navController.navigate("dashboard/admin") {
                                         popUpTo("login") { inclusive = true }
                                     }
-                                    "cashier" -> navController.navigate("cashier_dashboard") {
+                                    "cashier" -> navController.navigate("dashboard/cashier") {
                                         popUpTo("login") { inclusive = true }
                                     }
                                 }
@@ -82,30 +82,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable("cashier_dashboard") {
+                    composable("dashboard/{role}") { backStackEntry ->
+                        val role = backStackEntry.arguments?.getString("role") ?: "cashier"
                         DashboardScreen(
-                            onNavigateToKasLog = { kas ->
-                                val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
-                                navController.navigate("kas_log/$json")
-                            },
-                            onNavigateToPelangganLog = { customer ->
-                                val json = URLEncoder.encode(Json.encodeToString(customer), "UTF-8")
-                                navController.navigate("pelanggan_log/$json")
-                            },
-                            onNavigateToInventoryLog = { produk ->
-                                val json = URLEncoder.encode(Json.encodeToString(produk), "UTF-8")
-                                navController.navigate("inventory_log/$json")
-                            },
-                            onLogout = {
-                                navController.navigate("login") {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
-                        )
-                    }
-
-                    composable("admin_dashboard") {
-                        DashboardScreen(
+                            role = role,
                             onNavigateToKasLog = { kas ->
                                 val json = URLEncoder.encode(Json.encodeToString(kas), "UTF-8")
                                 navController.navigate("kas_log/$json")
@@ -160,16 +140,44 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun DashboardScreen(
+    role                    : String,
     onNavigateToKasLog      : (Kas) -> Unit,
     onNavigateToPelangganLog: (Customer) -> Unit,
     onNavigateToInventoryLog: (Produk) -> Unit,
     onLogout                : () -> Unit
 ) {
+    val isAdmin = role == "admin"
+
+    // Tab untuk admin: Kas, Produk, Pengeluaran, Pelanggan, Transaksi, Profil
+    // Tab untuk kasir: Transaksi, Pelanggan, Profil
+    data class NavItem(
+        val label   : String,
+        val icon    : ImageVector,
+        val tabIndex: Int
+    )
+
+    val adminItems = listOf(
+        NavItem("Kas",         Icons.Outlined.AccountBalanceWallet, 0),
+        NavItem("Produk",      Icons.Outlined.ShoppingBag,          1),
+        NavItem("Pengeluaran", Icons.Outlined.MoneyOff,             2),
+        NavItem("Pelanggan",   Icons.Outlined.People,               3),
+        NavItem("Transaksi",   Icons.Outlined.Receipt,              4),
+        NavItem("Profil",      Icons.Outlined.Person,               5)
+    )
+
+    val cashierItems = listOf(
+        NavItem("Transaksi",   Icons.Outlined.Receipt,              0),
+        NavItem("Pelanggan",   Icons.Outlined.People,               1),
+        NavItem("Profil",      Icons.Outlined.Person,               2)
+    )
+
+    val items = if (isAdmin) adminItems else cashierItems
     var selectedTab by rememberSaveable { mutableStateOf(0) }
 
     Scaffold(
         bottomBar = {
             BottomNavBar(
+                items         = items.map { it.label to it.icon },
                 selectedTab   = selectedTab,
                 onTabSelected = { selectedTab = it }
             )
@@ -177,13 +185,21 @@ fun DashboardScreen(
         containerColor = BgGreen
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedTab) {
-                0 -> KasScreen(onNavigateToLog = onNavigateToKasLog)
-                1 -> ProdukScreen(onNavigateToLog = onNavigateToInventoryLog)
-                2 -> PengeluaranScreen()
-                3 -> PelangganScreen(onNavigateToLog = onNavigateToPelangganLog)
-                4 -> TransaksiScreen()
-                5 -> ProfileScreen(onLogout = onLogout)
+            if (isAdmin) {
+                when (selectedTab) {
+                    0 -> key(selectedTab) { KasScreen(onNavigateToLog = onNavigateToKasLog) }
+                    1 -> key(selectedTab) { ProdukScreen(onNavigateToLog = onNavigateToInventoryLog) }
+                    2 -> key(selectedTab) { PengeluaranScreen() }
+                    3 -> key(selectedTab) { PelangganScreen(onNavigateToLog = onNavigateToPelangganLog) }
+                    4 -> key(selectedTab) { TransaksiScreen() }
+                    5 -> ProfileScreen(onLogout = onLogout)
+                }
+            } else {
+                when (selectedTab) {
+                    0 -> key(selectedTab) { TransaksiScreen() }
+                    1 -> key(selectedTab) { PelangganScreen(onNavigateToLog = onNavigateToPelangganLog) }
+                    2 -> ProfileScreen(onLogout = onLogout)
+                }
             }
         }
     }
@@ -191,27 +207,17 @@ fun DashboardScreen(
 
 @Composable
 fun BottomNavBar(
+    items         : List<Pair<String, ImageVector>>,
     selectedTab   : Int,
     onTabSelected : (Int) -> Unit
 ) {
-    data class NavItem(val label: String, val icon: ImageVector)
-
-    val items = listOf(
-        NavItem("Kas",         Icons.Outlined.AccountBalanceWallet),
-        NavItem("Produk",      Icons.Outlined.ShoppingBag),
-        NavItem("Pengeluaran", Icons.Outlined.MoneyOff),
-        NavItem("Pelanggan",   Icons.Outlined.People),
-        NavItem("Transaksi",   Icons.Outlined.Receipt),
-        NavItem("Profil",      Icons.Outlined.Person)
-    )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(HeaderGreen)
             .padding(vertical = 8.dp)
     ) {
-        items.forEachIndexed { index, item ->
+        items.forEachIndexed { index, (label, icon) ->
             val isSelected = selectedTab == index
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -221,14 +227,14 @@ fun BottomNavBar(
                     .padding(vertical = 6.dp)
             ) {
                 Icon(
-                    imageVector        = item.icon,
-                    contentDescription = item.label,
+                    imageVector        = icon,
+                    contentDescription = label,
                     tint               = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
                     modifier           = Modifier.size(22.dp)
                 )
                 Spacer(Modifier.height(3.dp))
                 Text(
-                    text       = item.label,
+                    text       = label,
                     color      = if (isSelected) Color.White else Color.White.copy(alpha = 0.45f),
                     fontSize   = 9.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal

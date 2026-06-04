@@ -24,7 +24,7 @@ data class TransactionItem(
     val price: Double = 0.0
 )
 
-// Model untuk keranjang belanja di UI (tidak disimpan ke DB langsung)
+// Model untuk keranjang belanja di UI
 data class CartItem(
     val produk: Produk,
     val quantity: Double
