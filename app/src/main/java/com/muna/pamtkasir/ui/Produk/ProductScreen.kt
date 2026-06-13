@@ -43,6 +43,11 @@ fun ProdukScreen(
     val produkState by viewModel.produkState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
 
+    // TAMBAHAN: fetch ulang setiap kali screen dibuka
+    LaunchedEffect(Unit) {
+        viewModel.fetchProduk()
+    }
+
     var showAddDialog  by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf<Produk?>(null) }
 
@@ -221,7 +226,6 @@ private fun ProdukCard(
             )
         }
 
-        // Tombol Log + Edit
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
                 modifier = Modifier
